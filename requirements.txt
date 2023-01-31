@@ -1,0 +1,4 @@
+Pillow==9.4.0
+python-dotenv==0.21.1
+requests==2.28.2
+typer==0.7.0
