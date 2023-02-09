@@ -33,22 +33,26 @@ def fetch_image(
 
     data = response.json()
 
-    if data['media_type'] != 'image':
-        print(f"No image available for {data['date']}")
-        return
+    if isinstance(data, dict):
+        data = [data]
 
-    url = data['url']
-    title = data['title']
+    for res in data:
+        if res['media_type'] != 'image':
+            print(f"No image available for {data['date']}")
+            continue
 
-    print('Fetching Image...')
+        url = res['url']
+        title = res['title']
 
-    image = get_image(url)
-    image.show()
+        print('Fetching Image...')
 
-    if save:
-        save_image_to_filesystem(image, title)
+        image = get_image(url)
+        image.show()
 
-    image.close()
+        if save:
+            save_image_to_filesystem(image, title)
+
+        image.close()
 
 
 if __name__ == '__main__':
