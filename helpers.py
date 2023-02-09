@@ -19,8 +19,8 @@ def url_query_params(datetime, start, end) -> Dict:
         return {'date': str(datetime.date())}
 
 
-def get_image(url: str) -> Image:
-    image_response = requests.get(url)
+async def get_image(client, url: str) -> Image:
+    image_response = await client.get(url)
     image = Image.open(BytesIO(image_response.content))
     return image
 
