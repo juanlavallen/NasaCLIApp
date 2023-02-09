@@ -3,9 +3,10 @@ from io import BytesIO
 from pathlib import Path
 from typing import Dict
 from PIL import Image
-import requests
+
 
 IMAGE_DIR = Path().joinpath('images')
+
 
 def url_query_params(datetime, start, end) -> Dict:
     if start:
