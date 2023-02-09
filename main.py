@@ -1,11 +1,9 @@
 import os
-from io import BytesIO
-from pathlib import Path
-from PIL import Image
 import typer
 import requests
 from datetime import datetime
 from dotenv import load_dotenv
+from helpers import save_image_to_filesystem, url_query_params, get_image
 
 load_dotenv()
 
@@ -13,7 +11,6 @@ app = typer.Typer()
 
 API_KEY = os.getenv('API_KEY')
 API_URL = os.getenv('API_URL')
-IMAGE_DIR = Path().joinpath('images')
 
 default_date = typer.Argument(
     datetime.now().strftime('%Y-%m-%d'), formats=['%Y-%m-%d']
@@ -21,12 +18,16 @@ default_date = typer.Argument(
 
 
 @app.command()
-def fetch_image(date: datetime = default_date, save: bool = False):
+def fetch_image(
+    date: datetime = default_date,
+    save: bool = False,
+    start: datetime = typer.Option(None),
+    end: datetime = typer.Option(None)
+):
     print('Sending API request...')
 
-    dt = str(date.date())
-    url_for_date = f'{API_URL}{API_KEY}&date={dt}'
-    response = requests.get(url_for_date)
+    query_params = url_query_params(date, start, end)
+    response = requests.get(API_URL, params=query_params)
 
     response.raise_for_status()
 
@@ -38,18 +39,14 @@ def fetch_image(date: datetime = default_date, save: bool = False):
 
     url = data['url']
     title = data['title']
+
     print('Fetching Image...')
 
-    image_response = requests.get(url)
-    image = Image.open(BytesIO(image_response.content))
-
+    image = get_image(url)
     image.show()
 
     if save:
-        if not IMAGE_DIR.exists():
-            os.mkdir(IMAGE_DIR)
-        image_name = f'{title}.{image.format}'
-        image.save(IMAGE_DIR / image_name, image.format)
+        save_image_to_filesystem(image, title)
 
     image.close()
 
