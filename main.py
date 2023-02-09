@@ -1,6 +1,8 @@
 import os
 import typer
 import requests
+import asyncio
+import httpx
 from datetime import datetime
 from dotenv import load_dotenv
 from helpers import save_image_to_filesystem, url_query_params, get_image
@@ -16,6 +18,14 @@ default_date = typer.Argument(
     datetime.now().strftime('%Y-%m-%d'), formats=['%Y-%m-%d']
 )
 
+async def get_images(urls):
+    async with httpx.AsyncClient() as client:
+        tasks = []
+        for url in urls:
+            tasks.append(asyncio.create_tasks(get_image(client, url)))
+        
+        images = asyncio.gather(*tasks)
+        return images
 
 @app.command()
 def fetch_image(
@@ -32,25 +42,24 @@ def fetch_image(
     response.raise_for_status()
 
     data = response.json()
-
+  
     if isinstance(data, dict):
         data = [data]
 
+    urls = [d['url'] for d in data if d['media_type'] == 'image']
+    titles = [d['title'] for d in data if d['media_type'] == 'image']
+
     for res in data:
-        if res['media_type'] != 'image':
-            print(f"No image available for {data['date']}")
-            continue
+        if res['media_type' != 'image']:
+            print(f"No image available for {res['date']}")
 
-        url = res['url']
-        title = res['title']
+    images = asyncio.run(get_images(urls))
 
-        print('Fetching Image...')
-
-        image = get_image(url)
+    for i, image in enumerate(images):
         image.show()
 
         if save:
-            save_image_to_filesystem(image, title)
+            save_image_to_filesystem(image, titles[i])
 
         image.close()
 
